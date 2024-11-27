@@ -12,7 +12,7 @@ import Checkout from './pages/Checkout';
 import About from './pages/About';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
-import ItemManage from './components/admincom/ItemManage'
+
 
 function App() {
   return (
