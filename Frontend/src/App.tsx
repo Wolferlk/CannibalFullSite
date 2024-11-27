@@ -31,7 +31,7 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/dashboard/itemmanage" element={<ItemManage />} />
+            
           </Routes>
         </div>
       </Router>
