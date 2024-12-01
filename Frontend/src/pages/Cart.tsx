@@ -144,6 +144,15 @@ export default function Cart() {
                   </div>
                 </div>
               ))}
+
+            <div className="text-center py-12">
+            <Link
+              to="/store"
+              className="inline-block bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition-colors"
+            >
+              Add More Iteam
+            </Link>
+          </div>
             </div>
 
             <div className="lg:col-span-1">
@@ -177,6 +186,7 @@ export default function Cart() {
               </div>
             </div>
           </div>
+          
         )}
       </div>
     </div>
