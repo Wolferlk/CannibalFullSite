@@ -35,6 +35,7 @@ export default function AdminDashboard() {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log(token);
       const response = await axios.get('http://localhost:5000/api/users/viewuser', {
         headers: { Authorization: `Bearer ${token}` },
       });

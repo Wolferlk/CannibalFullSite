@@ -33,7 +33,7 @@ exports.addUser = async (req, res) => {
 exports.viewUsers = async (req, res) => {
   try {
     // Only admins can view all users
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== 'Manager') {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
