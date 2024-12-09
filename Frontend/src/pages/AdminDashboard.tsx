@@ -7,6 +7,7 @@ import axios from 'axios';
 import ItemManage from '../components/admincom/ItemManage';
 import PhotosManage from '../components/admincom/ManagePhotos';
 import OrderManage from '../components/admincom/OrderManage';
+import OrderHandle from '../components/admincom/OrderHandle';
 import Messages from '../components/admincom/ManageMessages';
 import AddUserComponent from '../components/admincom/AddUserComponent';
 
@@ -103,7 +104,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Sidebar Menu */}
-        {['item-manage', 'photos-manage', 'order-manage', 'messages', 'User Manager'].map((section) => (
+        {['item-manage', 'photos-manage', 'order-manage', 'messages', 'User Manager','OrderHandle'].map((section) => (
           <motion.button
             key={section}
             onClick={() => handleSectionClick(section)}
@@ -174,6 +175,17 @@ export default function AdminDashboard() {
               transition={{ duration: 0.3 }}
             >
               <AddUserComponent />
+            </motion.div>
+          )}
+          {activeSection === "OrderHandle" && (
+            <motion.div
+              key="OrderHandle"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <OrderHandle/>
             </motion.div>
           )}
         </AnimatePresence>
