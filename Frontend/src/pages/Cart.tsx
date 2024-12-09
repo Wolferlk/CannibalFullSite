@@ -1,16 +1,24 @@
-// Cart.js
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import Confirmation from './Confirmation';
 import axios from 'axios';
-
+import { CheckCircle } from 'lucide-react'; // Import the check icon
 
 export default function Cart() {
   const { state, dispatch } = useCart();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false); // Control modal visibility
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false); // Control success popup visibility
+  const [formData, setFormData] = useState({
+    name: '',
+    phone1: '',
+    phone2: '',
+    address: '',
+  });
   const navigate = useNavigate();
 
   const total = cartItems.reduce((sum, item) => {
@@ -51,13 +59,46 @@ export default function Cart() {
   }
 
   const handleCheckout = () => {
-    navigate('/checkout', {
-      state: {
-        cartItems,
-        total,
-      },
+    setShowModal(true); // Show the modal on checkout button click
+  };
+
+  const handleFormChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
     });
-    console.log();
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    const orderData = {
+      ...formData,
+      cartItems: cartItems.map((item) => ({
+        productName: item.product?.name,
+        quantity: item.quantity,
+        price: item.product?.price,
+      })),
+      totalAmount: total,
+    };
+
+    try {
+      await axios.post('http://localhost:5000/api/orders', orderData);
+      setShowModal(false); // Close the modal after successful order submission
+      setShowSuccessPopup(true); // Show the success popup
+      console.log('Order Data sent successfully');
+      // You can also redirect or navigate after a timeout
+      setTimeout(() => {
+        navigate('/'); // Redirect to home page
+      }, 5000);
+    } catch (error) {
+      console.error('Error placing order:', error);
+      setError('Failed to place order.');
+    }
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false); // Close success popup
+    navigate('/'); // Navigate to home page
   };
 
   return (
@@ -144,15 +185,6 @@ export default function Cart() {
                   </div>
                 </div>
               ))}
-
-            <div className="text-center py-12">
-            <Link
-              to="/store"
-              className="inline-block bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition-colors"
-            >
-              Add More Iteam
-            </Link>
-          </div>
             </div>
 
             <div className="lg:col-span-1">
@@ -175,18 +207,104 @@ export default function Cart() {
                   </div>
                 </div>
                 
-                
                 <button
                   onClick={handleCheckout}
                   className="block w-full bg-black text-white text-center py-3 rounded-full hover:bg-gray-800 transition-colors"
                 >
                   Proceed to Checkout
                 </button>
-
               </div>
             </div>
           </div>
-          
+        )}
+
+        {/* Modal for user input */}
+        {showModal && (
+          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+              <h2 className="text-xl font-semibold mb-4">Enter Your Details</h2>
+              <form onSubmit={handleFormSubmit}>
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleFormChange}
+                    placeholder="Full Name"
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                  <input
+                    type="text"
+                    name="phone1"
+                    value={formData.phone1}
+                    onChange={handleFormChange}
+                    placeholder="Phone Number 1"
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                  <input
+                    type="text"
+                    name="phone2"
+                    value={formData.phone2}
+                    onChange={handleFormChange}
+                    placeholder="Phone Number 2 (optional)"
+                    className="w-full p-2 border rounded"
+                  />
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleFormChange}
+                    placeholder="Address"
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                  <div className="flex justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="bg-gray-500 text-white py-2 px-6 rounded-full"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-black text-white py-2 px-6 rounded-full"
+                    >
+                      Submit Order
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Success Popup */}
+        {showSuccessPopup && (
+          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-4">Your order was confirmed successfully!</h2>
+              <p className="text-gray-600 mb-4">
+                Our agent will call you, and within 3 days, your order will be placed.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => navigate('/')}
+                  className="bg-black text-white py-2 px-6 rounded-full"
+                >
+                  Home Page
+                </button>
+                <button
+                  onClick={() => navigate('/contact-us')}
+                  className="bg-black text-white py-2 px-6 rounded-full"
+                >
+                  Contact Us
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

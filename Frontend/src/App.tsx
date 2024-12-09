@@ -12,6 +12,7 @@ import Checkout from './pages/Checkout';
 import About from './pages/About';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import Confirmation from './pages/Confirmation';
 
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/cart/Confirmation" element = {<Confirmation/>}/>
             
           </Routes>
         </div>
