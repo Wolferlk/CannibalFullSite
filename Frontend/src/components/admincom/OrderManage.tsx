@@ -1,32 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
-import { FaEdit, FaTrashAlt, FaEye } from "react-icons/fa";
+import { FaEdit, FaEye } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-// Initial form data template for orders
-const initialFormData = () => ({
-  id: "",
-  name: "",
-  phone1: "",
-  phone2: "",
-  address: "",
-  cartItems: [],
-  totalAmount: 0,
-  status: "pending",
-});
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const OrderManage = () => {
   const [orders, setOrders] = useState([]);
-  const [formData, setFormData] = useState(initialFormData());
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [formData, setFormData] = useState(null);  // Make sure the formData starts as null
   const [editingOrder, setEditingOrder] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [refresh, setRefresh] = useState(false);
+  const [filter, setFilter] = useState("all");  // State to control the filter (all, completed, pending, canceled)
+  const navigate = useNavigate(); // Initialize navigate
 
   useEffect(() => {
     fetchOrders();
   }, [refresh]);
+
+  useEffect(() => {
+    // Filter orders based on the selected filter
+    if (filter === "all") {
+      setFilteredOrders(orders);
+    } else {
+      setFilteredOrders(orders.filter(order => order.status === filter));
+    }
+  }, [filter, orders]);
 
   // Fetch orders from the API
   const fetchOrders = async () => {
@@ -39,8 +40,8 @@ const OrderManage = () => {
     }
   };
 
-  // Handle adding or updating an order
-  const handleAddOrUpdate = async (e) => {
+  // Handle updating an order
+  const handleUpdateOrder = async (e) => {
     e.preventDefault();
     if (
       !formData.name ||
@@ -55,20 +56,15 @@ const OrderManage = () => {
     const finalOrderData = { ...formData };
 
     try {
-      if (editingOrder) {
+      if (editingOrder && editingOrder.id) {
         await axios.put(
           `http://localhost:5000/api/orders/${editingOrder.id}`,
           finalOrderData
         );
         toast.success("Order updated successfully!");
-      } else {
-        const newOrder = { ...finalOrderData, id: Date.now().toString() };
-        await axios.post("http://localhost:5000/api/orders", newOrder);
-        toast.success("Order added successfully!");
-      }
-      resetForm();
-      setRefresh(!refresh);
-      if (selectedOrder) {
+        setRefresh(!refresh);
+        setFormData(null);
+        setEditingOrder(null);
         setSelectedOrder(null);
       }
     } catch (error) {
@@ -76,25 +72,6 @@ const OrderManage = () => {
       toast.error(
         `Error saving order: ${error.response?.data?.message || error.message}`
       );
-    }
-  };
-
-  // Handle deleting an order
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this order?")) {
-      try {
-        await axios.delete(`http://localhost:5000/api/orders/${id}`);
-        toast.success("Order deleted successfully!");
-        setRefresh(!refresh);
-        if (selectedOrder && selectedOrder.id === id) {
-          setSelectedOrder(null);
-        }
-      } catch (error) {
-        console.error("Error deleting order:", error);
-        toast.error(
-          `Error deleting order: ${error.response?.data?.message || error.message}`
-        );
-      }
     }
   };
 
@@ -107,30 +84,9 @@ const OrderManage = () => {
 
   // Reset form and state
   const resetForm = () => {
-    setFormData(initialFormData());
+    setFormData(null);
     setEditingOrder(null);
     setSelectedOrder(null);
-  };
-
-  // Handle status change from dropdown
-  const handleStatusChange = async (e) => {
-    const newStatus = e.target.value;
-    const updatedOrder = { ...selectedOrder, status: newStatus };
-    try {
-      await axios.put(
-        `http://localhost:5000/api/orders/${selectedOrder.id}`,
-        updatedOrder
-      );
-      toast.success("Order status updated successfully!");
-      setSelectedOrder(updatedOrder);
-      setFormData(updatedOrder);
-      setRefresh(!refresh);
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error(
-        `Error updating status: ${error.response?.data?.message || error.message}`
-      );
-    }
   };
 
   // Function to get color based on status
@@ -147,6 +103,16 @@ const OrderManage = () => {
     }
   };
 
+  // Function to count orders by status
+  const countOrdersByStatus = (status) => {
+    return orders.filter(order => order.status === status).length;
+  };
+
+  const totalOrders = orders.length;
+  const completedOrders = countOrdersByStatus("completed");
+  const pendingOrders = countOrdersByStatus("pending");
+  const cancelledOrders = countOrdersByStatus("cancelled");
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Left Panel: Order List */}
@@ -158,18 +124,40 @@ const OrderManage = () => {
       >
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Order List</h1>
-          <motion.button
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transform transition-all duration-300"
-            onClick={() => resetForm()}
-            whileHover={{ scale: 1.05 }}
-          >
-            Add Order
-          </motion.button>
         </div>
-        {orders.length === 0 ? (
+        
+        {/* Display Order Counts with filter */}
+        <div className="flex space-x-4 mb-4">
+          <div 
+            onClick={() => setFilter("all")}
+            className={`cursor-pointer bg-blue-100 text-blue-800 px-4 py-2 rounded-lg ${filter === "all" ? "font-bold" : ""}`}
+          >
+            <strong>All Orders:</strong> {totalOrders}
+          </div>
+          <div 
+            onClick={() => setFilter("completed")}
+            className={`cursor-pointer bg-green-100 text-green-800 px-4 py-2 rounded-lg ${filter === "completed" ? "font-bold" : ""}`}
+          >
+            <strong>Completed:</strong> {completedOrders}
+          </div>
+          <div 
+            onClick={() => setFilter("pending")}
+            className={`cursor-pointer bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg ${filter === "pending" ? "font-bold" : ""}`}
+          >
+            <strong>Pending:</strong> {pendingOrders}
+          </div>
+          <div 
+            onClick={() => setFilter("cancelled")}
+            className={`cursor-pointer bg-red-100 text-red-800 px-4 py-2 rounded-lg ${filter === "cancelled" ? "font-bold" : ""}`}
+          >
+            <strong>Cancelled:</strong> {cancelledOrders}
+          </div>
+        </div>
+
+        {filteredOrders.length === 0 ? (
           <p className="text-gray-600">No orders available.</p>
         ) : (
-          orders.map((order) => (
+          filteredOrders.map((order) => (
             <motion.div
               key={order.id}
               className={`mb-4 p-4 rounded-lg shadow-md cursor-pointer border-l-4 ${getStatusColor(
@@ -200,7 +188,7 @@ const OrderManage = () => {
         )}
       </motion.div>
 
-      {/* Right Panel: Order Details or Add/Edit Form */}
+      {/* Right Panel: Order Details or Edit Form */}
       <motion.div
         className="w-1/2 p-6 overflow-y-auto bg-gray-50 shadow-lg"
         initial={{ x: 300 }}
@@ -234,290 +222,38 @@ const OrderManage = () => {
               <p className="text-gray-800">
                 <strong>Total Amount:</strong> ${formData.totalAmount.toFixed(2)}
               </p>
-              <div className="flex items-center">
-                <strong className="text-gray-800 mr-2">Status:</strong>
-                <select
-                  value={formData.status}
-                  onChange={handleStatusChange}
-                  className={`p-2 rounded-md ${getStatusColor(formData.status)} focus:outline-none`}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
+
+              {/* Render cart items */}
               <div>
-                <h2 className="text-xl font-semibold mt-4">Cart Items</h2>
-                {formData.cartItems.length === 0 ? (
-                  <p className="text-gray-600">No items in the cart.</p>
-                ) : (
-                  <ul className="list-disc list-inside">
-                    {formData.cartItems.map((item, index) => (
-                      <li key={index} className="text-gray-700">
-                        {item.quantity} x {item.productName} - $
-                        {item.price.toFixed(2)}
+                <h3 className="text-lg font-semibold text-gray-800">Cart Items</h3>
+                <ul className="space-y-2">
+                  {formData.cartItems.length > 0 ? (
+                    formData.cartItems.map((item, index) => (
+                      <li key={index} className="flex justify-between text-gray-800">
+                        <span>{item.productName} (x{item.quantity}) - {item.color}</span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
                       </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="mt-6 flex space-x-4">
-                <button
-                  onClick={() => handleSelectOrder(selectedOrder)}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-yellow-700 transition duration-300 flex items-center"
-                >
-                  <FaEdit className="mr-2" /> Edit Order
-                </button>
-                <button
-                  onClick={() => handleDelete(selectedOrder.id)}
-                  className="bg-red-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-red-700 transition duration-300 flex items-center"
-                >
-                  <FaTrashAlt className="mr-2" /> Delete Order
-                </button>
+                    ))
+                  ) : (
+                    <p className="text-gray-600">No items in cart</p>
+                  )}
+                </ul>
               </div>
             </div>
+            <div className="flex justify-end space-x-4 mt-6">
+              <button
+                onClick={() => navigate(`/order-edit/${selectedOrder._id}`)} // Redirect to the edit page
+                className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center"
+              >
+                <FaEdit size={16} className="mr-2" /> Edit
+              </button>
+            </div>
           </>
-        ) : editingOrder ? (
-          // Edit Order Form
-          <div>
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">
-              {editingOrder ? "Edit Order" : "Add Order"}
-            </h1>
-            <form onSubmit={handleAddOrUpdate}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-gray-700">Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Phone 1</label>
-                  <input
-                    type="text"
-                    value={formData.phone1}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone1: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Phone 2</label>
-                  <input
-                    type="text"
-                    value={formData.phone2}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone2: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Address</label>
-                  <textarea
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Total Amount</label>
-                  <input
-                    type="number"
-                    value={formData.totalAmount}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        totalAmount: parseFloat(e.target.value).toFixed(2),
-                      })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Displaying cart items */}
-              <div className="mt-6">
-                <h3 className="text-xl font-semibold mb-4">Cart Items</h3>
-                {formData.cartItems.length === 0 ? (
-                  <p className="text-gray-600">No items in the cart.</p>
-                ) : (
-                  <ul className="list-disc list-inside">
-                    {formData.cartItems.map((item, index) => (
-                      <li key={index} className="mb-2 text-gray-700">
-                        {item.quantity} x {item.productName} - $
-                        {item.price.toFixed(2)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="mt-6 flex space-x-4">
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-green-700 transition duration-300"
-                >
-                  {editingOrder ? "Update Order" : "Add Order"}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="bg-gray-400 text-white px-4 py-2 rounded-md shadow-md hover:bg-gray-500 transition duration-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
         ) : (
-          // Default View: Add Order Form
-          <div>
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">Add New Order</h1>
-            <form onSubmit={handleAddOrUpdate}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-gray-700">Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Phone 1</label>
-                  <input
-                    type="text"
-                    value={formData.phone1}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone1: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Phone 2</label>
-                  <input
-                    type="text"
-                    value={formData.phone2}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone2: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Address</label>
-                  <textarea
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Total Amount</label>
-                  <input
-                    type="number"
-                    value={formData.totalAmount}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        totalAmount: parseFloat(e.target.value).toFixed(2),
-                      })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Displaying cart items */}
-              <div className="mt-6">
-                <h3 className="text-xl font-semibold mb-4">Cart Items</h3>
-                {formData.cartItems.length === 0 ? (
-                  <p className="text-gray-600">No items in the cart.</p>
-                ) : (
-                  <ul className="list-disc list-inside">
-                    {formData.cartItems.map((item, index) => (
-                      <li key={index} className="mb-2 text-gray-700">
-                        {item.quantity} x {item.productName} - $
-                        {item.price.toFixed(2)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="mt-6 flex space-x-4">
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-green-700 transition duration-300"
-                >
-                  {editingOrder ? "Update Order" : "Add Order"}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="bg-gray-400 text-white px-4 py-2 rounded-md shadow-md hover:bg-gray-500 transition duration-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+          <div className="text-center text-gray-600">Please select an order to view details.</div>
         )}
       </motion.div>
-      <ToastContainer position="top-right" />
+      <ToastContainer />
     </div>
   );
 };

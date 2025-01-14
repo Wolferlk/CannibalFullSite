@@ -13,7 +13,7 @@ import About from './pages/About';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import Confirmation from './pages/Confirmation';
-
+import OrderEditPage from "./components/admincom/OrderEditPage"; 
 
 function App() {
   return (
@@ -32,8 +32,8 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/cart/Confirmation" element = {<Confirmation/>}/>
-            
+            <Route path="/cart/Confirmation" element={<Confirmation />} />
+            <Route path="/order-edit/:orderId" element={<OrderEditPage />} />
           </Routes>
         </div>
       </Router>

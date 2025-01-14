@@ -76,6 +76,7 @@ export default function Cart() {
       cartItems: cartItems.map((item) => ({
         productName: item.product?.name,
         quantity: item.quantity,
+        color: item.product?.color || 'N/A',
         price: item.product?.price,
       })),
       totalAmount: total,
@@ -99,6 +100,15 @@ export default function Cart() {
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false); // Close success popup
     navigate('/'); // Navigate to home page
+  };
+
+  const handleClearCart = () => {
+    dispatch({ type: 'CLEAR_CART' });
+    setCartItems([]);
+  };
+
+  const handleAddMoreItems = () => {
+    navigate('/store'); // Navigate to the store page to add more items
   };
 
   return (
@@ -206,13 +216,29 @@ export default function Cart() {
                     </div>
                   </div>
                 </div>
-                
+
                 <button
                   onClick={handleCheckout}
                   className="block w-full bg-black text-white text-center py-3 rounded-full hover:bg-gray-800 transition-colors"
                 >
                   Proceed to Checkout
                 </button>
+
+                {/* Additional Buttons */}
+                <div className="mt-4 space-y-2">
+                  <button
+                    onClick={handleAddMoreItems}
+                    className="w-full bg-blue-600 text-white py-3 rounded-full hover:bg-blue-700 transition-colors"
+                  >
+                    Add More Items
+                  </button>
+                  <button
+                    onClick={handleClearCart}
+                    className="w-full bg-red-600 text-white py-3 rounded-full hover:bg-red-700 transition-colors"
+                  >
+                    Clear Cart
+                  </button>
+                </div>
               </div>
             </div>
           </div>
