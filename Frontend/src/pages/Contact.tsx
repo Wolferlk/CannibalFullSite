@@ -45,7 +45,7 @@ export default function Contact() {
       {/* Hero Section */}
       <div className="relative h-[50vh] overflow-hidden">
         <img
-          src="https://scontent.fcmb1-2.fna.fbcdn.net/v/t51.75761-15/465802598_17874298302200111_883685641948974012_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGDjFriK8PIBhM5Od4E5B6-yCJ3cpIQ0nfIIndykhDSd7cdypIqfG2k4FyEw3K6aCQNubDMCaZaVe1SWRW_AJrq&_nc_ohc=XUFDYb3lfD0Q7kNvgEXfMLz&_nc_zt=23&_nc_ht=scontent.fcmb1-2.fna&_nc_gid=Am2gBSYsTVGX0a8efrT87kP&oh=00_AYA2iRjZ5mPqlaDJMaseeeMvZo63uukbi76YWw1w31SFNg&oe=6748AC2E"
+          src="https://i.ibb.co/Jr49Jdf/DSC04736.png"
           alt="Contact Us"
           className="w-full h-full object-cover"
         />

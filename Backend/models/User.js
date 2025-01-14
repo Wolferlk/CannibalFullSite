@@ -15,7 +15,11 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['Manager', 'Admin'],
-    default: 'Admin',
+    default: 'Manager', // Default role set to 'Manager'
+  },
+  profileImage: {
+    type: String, // Store the profile image URL
+    required: true,
   },
   username: {
     type: String,

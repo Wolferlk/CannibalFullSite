@@ -11,6 +11,7 @@ const AddUserComponent = () => {
     username: '',
     password: '',
     confirmPassword: '',
+    profileImage: '', // Added profile image URL field
   });
 
   const [error, setError] = useState('');
@@ -27,7 +28,7 @@ const AddUserComponent = () => {
       setError('Passwords do not match!');
       return;
     }
-    if (formData.name === '' || formData.email === '' || formData.username === '' || formData.password === '') {
+    if (formData.name === '' || formData.email === '' || formData.username === '' || formData.password === '' || formData.profileImage === '') {
       setError('Please fill all the fields.');
       return;
     }
@@ -42,6 +43,7 @@ const AddUserComponent = () => {
         username: '',
         password: '',
         confirmPassword: '',
+        profileImage: '', // Reset profile image URL
       });
     } catch (error) {
       toast.error('Error adding user. Please try again.');
@@ -126,6 +128,27 @@ const AddUserComponent = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Re-enter password"
             />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700">Profile Image URL</label>
+            <input
+              type="text"
+              name="profileImage"
+              value={formData.profileImage}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter image URL"
+            />
+            {formData.profileImage && (
+              <div className="mt-2">
+                <img
+                  src={formData.profileImage}
+                  alt="Profile Preview"
+                  className="w-32 h-32 rounded-full object-cover"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end">

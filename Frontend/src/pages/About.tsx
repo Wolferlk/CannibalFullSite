@@ -8,7 +8,7 @@ export default function About() {
     <div className="pt-16">
       <div className="relative h-[60vh] overflow-hidden">
         <img
-          src="https://scontent.fcmb1-2.fna.fbcdn.net/v/t39.30808-6/458308746_122115299408433279_2979501028993800266_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHozp7t3JsxkEWeGheYLArhfhCF5yjjw8x-EIXnKOPDzHm-uRqjlfKKsrtOwkYntZ16lGSuwh9wudHxKJ4A3e2I&_nc_ohc=xc5prh-td-0Q7kNvgHuHrpt&_nc_zt=23&_nc_ht=scontent.fcmb1-2.fna&_nc_gid=Asnir8fSGH4a6rtJcO-jzzo&oh=00_AYDN9rfHif0MoVAkcLH_PRyViJruOuI7DM0kclGZ3x2HUg&oe=6748AC35"
+          src="https://i.ibb.co/Xk1X75N/DSC04626.png"
           alt="Fashion Studio"
           className="w-full h-full object-cover"
         />

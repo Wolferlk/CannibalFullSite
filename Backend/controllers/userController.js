@@ -1,24 +1,39 @@
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { checkAuth } = require('../middleware/authMiddleware'); // Custom middleware for checking token
+const jwt = require('jsonwebtoken');
+const { checkAuth } = require('../middleware/authMiddleware');
+const { checkAuth, checkAdmin } = require('../middleware/authMiddleware');
+
 
 // Add User Controller
+// Modified to allow Managers and Admins to add users and handle the profile image
 exports.addUser = async (req, res) => {
   try {
-    const { name, email, role, username, password } = req.body;
+    const { name, email, role, username, password, profileImage } = req.body;
 
+    // Check if the profileImage URL is valid
+    if (!/^https?:\/\/.+\.(jpg|jpeg|png|gif|bmp)$/i.test(profileImage)) {
+      return res.status(400).json({ message: 'Invalid profile image URL format.' });
+    }
+
+    // Check if the user already exists by email or username
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already in use.' });
     }
 
+    // Hash the password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create and save the new user
     const newUser = new User({
       name,
       email,
-      role,
+      role,  // Allow any role to be assigned by the caller
       username,
-      password
+      password: hashedPassword,
+      profileImage,
     });
 
     await newUser.save();
@@ -29,11 +44,11 @@ exports.addUser = async (req, res) => {
   }
 };
 
-// View Users - Only Admins can view all users
+// View Users - Only Admin can view all users
 exports.viewUsers = async (req, res) => {
   try {
     // Only admins can view all users
-    if (req.user.role !== 'Manager') {
+    if (req.user.role !== 'Admin') {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
@@ -64,7 +79,7 @@ exports.viewProfile = async (req, res) => {
 // Edit User Controller
 exports.editUser = async (req, res) => {
   const { userId } = req.params;
-  const { name, email, role, username, password } = req.body;
+  const { name, email, role, username, password, profileImage } = req.body;
 
   try {
     const userToUpdate = await User.findById(userId);
@@ -82,6 +97,7 @@ exports.editUser = async (req, res) => {
     userToUpdate.email = email || userToUpdate.email;
     userToUpdate.role = role || userToUpdate.role;
     userToUpdate.username = username || userToUpdate.username;
+    userToUpdate.profileImage = profileImage || userToUpdate.profileImage; // Update profile image if provided
 
     const updatedUser = await userToUpdate.save();
 
@@ -97,13 +113,12 @@ exports.deleteUser = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    // Only admins can delete users
     const userToDelete = await User.findById(userId);
     if (!userToDelete) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (userToDelete.role === 'admin') {
+    if (userToDelete.role === 'Admin') {
       return res.status(403).json({ message: 'Cannot delete an admin' });
     }
 
@@ -126,19 +141,21 @@ exports.loginUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const isPasswordMatch = await user.matchPassword(password);
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Create and sign JWT token
-    const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, 'your_jwt_secret', {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign(
+      { id: user._id, username: user.username, role: user.role },
+      'your_jwt_secret',
+      { expiresIn: '1h' }
+    );
 
     res.status(200).json({
       message: 'Login successful',
-      token
+      token,
     });
   } catch (error) {
     console.error(error);
@@ -148,7 +165,7 @@ exports.loginUser = async (req, res) => {
 
 // Profile Update Route (Optional)
 exports.updateProfile = async (req, res) => {
-  const { name, email, username } = req.body;
+  const { name, email, username, password, currentPassword, profileImage } = req.body;
   const userId = req.user.id;
 
   try {
@@ -157,9 +174,21 @@ exports.updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // If password is being updated, verify current password and hash new one
+    if (password) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
     user.name = name || user.name;
     user.email = email || user.email;
     user.username = username || user.username;
+    user.profileImage = profileImage || user.profileImage; // Update profile image if provided
 
     await user.save();
     res.status(200).json({ message: 'Profile updated successfully' });

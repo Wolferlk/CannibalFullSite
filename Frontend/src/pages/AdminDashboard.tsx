@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, DollarSign, Users, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
 import ItemManage from '../components/admincom/ItemManage';
 import PhotosManage from '../components/admincom/ManagePhotos';
 import OrderManage from '../components/admincom/OrderManage';
-import OrderHandle from '../components/admincom/OrderHandle';
 import Messages from '../components/admincom/ManageMessages';
 import AddUserComponent from '../components/admincom/AddUserComponent';
+import ProfileUpdatePage from '../components/admincom/components/ProfileUpdatePage';
+import ViewUsersPage from '../components/admincom/components/ViewUsersPage';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -18,12 +18,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [products, setProducts] = useState([]);
-  
-  // Check if the user is an admin when the component mounts
+
   useEffect(() => {
     const isAdmin = localStorage.getItem('isAdmin');
     const token = localStorage.getItem('token');
-    
+
     if (!isAdmin || !token) {
       navigate('/admin'); // Redirect to login if not admin or token is missing
     }
@@ -32,35 +31,52 @@ export default function AdminDashboard() {
     fetchProducts(); // Fetch product data
   }, [navigate]);
 
-  // Fetch user data from the backend
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem('token');
-      console.log(token);
-      const response = await axios.get('http://localhost:5000/api/users/viewuser', {
+      const response = await axios.get('http://localhost:5000/api/users/viewuser/', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUserData(response.data);
+      console.log(response.data);  // Log the response data for debugging
+      console.log(response.data);  
+
+    // Assuming that you need the first user or filter by a specific criteria (e.g., email, id)
+    const loggedInUser = response.data[0];  // You can adjust this based on your logic
+
+    if (loggedInUser) {
+      setUserData(loggedInUser);
+    } else {
+      setError('User not found');
+    }
     } catch (error) {
+      console.error("Error fetching user data:", error);
       setError('Error fetching user details');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch products (example)
   const fetchProducts = async () => {
     try {
       const response = await axios.get('/api/products');
       setProducts(response.data);
     } catch (error) {
+      console.error("Error fetching products:", error);
       setError('Error fetching products');
     }
   };
 
-  // Handle section navigation in the sidebar
   const handleSectionClick = (section) => {
     setActiveSection(section);
+  };
+
+  const handleLogout = () => {
+    const confirmLogout = window.confirm('Are you sure you want to log out?');
+    if (confirmLogout) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('isAdmin');
+      navigate('/admin'); // Redirect to the admin login page
+    }
   };
 
   if (loading) {
@@ -75,52 +91,58 @@ export default function AdminDashboard() {
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <motion.div
-        className="w-64 bg-gray-800 text-white flex flex-col p-6 top-5 left-0 h-full"
+        className="w-64 bg-gray-800 text-white flex flex-col p-6 h-full"
         initial={{ x: -300 }}
         animate={{ x: 0 }}
         transition={{ type: 'spring', stiffness: 200 }}
       >
         <div className="mb-6">
-          {/* Display User Info */}
-          <img
+        <img
                 src={''}
                 alt="Admin"
                 className="w-16 h-16 rounded-full"
               />
-          {userData && (
+          {userData ? (
             <div className="flex items-center">
-              
               <img
-                src={userData.profileImage || 'https://via.placeholder.com/100'}
+                src={userData.profileImage || 'https://img.icons8.com/?size=100&id=enhXU0wuHL8s&format=png&color=000000'}
                 alt="Admin"
                 className="w-16 h-16 rounded-full"
               />
               <div className="ml-4">
-                <p className="text-lg font-bold">{userData.name || 'Invalid login'}</p>
+                <p className="text-lg font-bold">{userData.name|| 'Invalid login'}</p>
                 <p className="text-sm text-gray-400">{userData.role || 'Invalid login'}</p>
               </div>
             </div>
+          ) : (
+            <div>Loading user data...</div>  // Fallback while loading
           )}
         </div>
 
         {/* Sidebar Menu */}
-        {['item-manage', 'photos-manage', 'order-manage', 'messages', 'User Manager','OrderHandle'].map((section) => (
+        {['item-manage', 'photos-manage', 'order-manage', 'messages', 'User Manager','view uses' ,'Profile'].map((section) => (
           <motion.button
             key={section}
             onClick={() => handleSectionClick(section)}
-            className={`py-2 px-4 text-left rounded-lg w-full mb-2 ${
-              activeSection === section ? 'bg-gray-700' : 'hover:bg-gray-600'
-            }`}
+            className={`py-2 px-4 text-left rounded-lg w-full mb-2 ${activeSection === section ? 'bg-gray-700' : 'hover:bg-gray-600'}`}
             whileHover={{ scale: 1.05 }}
           >
             {section.replace('-', ' ')}
           </motion.button>
         ))}
+
+        {/* Logout Button */}
+        <motion.button
+          onClick={handleLogout}
+          className="py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg w-full mt-auto"
+          whileHover={{ scale: 1.05 }}
+        >
+          Log Out
+        </motion.button>
       </motion.div>
 
       {/* Main Content */}
       <div className="flex-1 p-8">
-        {/* Section Content */}
         <AnimatePresence>
           {activeSection === 'item-manage' && (
             <motion.div
@@ -177,15 +199,27 @@ export default function AdminDashboard() {
               <AddUserComponent />
             </motion.div>
           )}
-          {activeSection === "OrderHandle" && (
+
+          {activeSection === 'Profile' && (
             <motion.div
-              key="OrderHandle"
+              key="Profile"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <OrderHandle/>
+              <ProfileUpdatePage />
+            </motion.div>
+          )}
+          {activeSection === 'view uses' && (
+            <motion.div
+              key="view uses"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ViewUsersPage />
             </motion.div>
           )}
         </AnimatePresence>
