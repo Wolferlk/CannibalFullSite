@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { checkAuth } = require('../middleware/authMiddleware');
+const { checkAdmin } = require('../middleware/adminMiddleware');
 
 // Route to add a new user (accessible by any authenticated user)
 router.post('/add', checkAuth, checkAdmin, userController.addUser);
@@ -26,6 +27,6 @@ router.get('/viewusers', checkAuth, userController.viewUsers);
 router.put('/update', checkAuth, userController.updateProfile);
 
 // Route for password reset (accessible by authenticated users)
-router.post('/forgot-password', checkAuth, userController.forgotPassword);
+// router.post('/forgot-password', checkAuth, userController.forgotPassword);
 
 module.exports = router;
