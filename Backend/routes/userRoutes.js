@@ -21,7 +21,7 @@ router.post('/login', userController.loginUser);
 router.get('/viewprofile', checkAuth, userController.viewProfile);
 
 // Route to view all users (accessible only by admin)
-router.get('/viewusers', checkAuth, userController.viewUsers);
+router.get('/viewusers', userController.viewUsers);
 
 // Route to update profile (accessible by authenticated users)
 router.put('/update', checkAuth, userController.updateProfile);

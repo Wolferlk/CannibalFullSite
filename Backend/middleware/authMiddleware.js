@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 
 // Middleware to check if the user is authenticated
 const checkAuth = (req, res, next) => {
+  console.log("header: ", req.header("Authorization"));
   const token = req.header("Authorization")?.split(" ")[1]; // Extract token from Authorization header
   if (!token) {
     return res.status(401).json({ message: "No token, authorization denied" });
