@@ -1,8 +1,7 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { checkAuth, checkAdmin } = require('../middleware/authMiddleware');
-
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { checkAuth, checkAdmin } = require("../middleware/authMiddleware");
 
 // Add User Controller
 // Modified to allow Managers and Admins to add users and handle the profile image
@@ -12,13 +11,15 @@ exports.addUser = async (req, res) => {
 
     // Check if the profileImage URL is valid
     if (!/^https?:\/\/.+\.(jpg|jpeg|png|gif|bmp)$/i.test(profileImage)) {
-      return res.status(400).json({ message: 'Invalid profile image URL format.' });
+      return res
+        .status(400)
+        .json({ message: "Invalid profile image URL format." });
     }
 
     // Check if the user already exists by email or username
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already in use.' });
+      return res.status(400).json({ message: "Email already in use." });
     }
 
     // Hash the password before saving
@@ -29,33 +30,34 @@ exports.addUser = async (req, res) => {
     const newUser = new User({
       name,
       email,
-      role,  // Allow any role to be assigned by the caller
+      role, // Allow any role to be assigned by the caller
       username,
       password: hashedPassword,
       profileImage,
     });
 
     await newUser.save();
-    res.status(201).json({ message: 'User added successfully!' });
+    res.status(201).json({ message: "User added successfully!" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 // View Users - Only Admin can view all users
 exports.viewUsers = async (req, res) => {
+
   try {
     // Only admins can view all users
-    if (req.user.role !== 'Admin') {
-      return res.status(403).json({ message: 'Access denied.' });
-    }
+    // if (req.user.role !== "Admin") {
+    //   return res.status(403).json({ message: "Access denied." });
+    // }
 
     const users = await User.find(); // Fetch all users from the database
     res.status(200).json(users); // Return the list of users
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -65,13 +67,13 @@ exports.viewProfile = async (req, res) => {
     const user = await User.findById(req.user.id); // Get the user from the token ID
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json(user); // Return user profile
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -83,7 +85,7 @@ exports.editUser = async (req, res) => {
   try {
     const userToUpdate = await User.findById(userId);
     if (!userToUpdate) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Check if password is being updated and hash it if needed
@@ -103,7 +105,7 @@ exports.editUser = async (req, res) => {
     res.status(200).json(updatedUser);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -114,18 +116,18 @@ exports.deleteUser = async (req, res) => {
   try {
     const userToDelete = await User.findById(userId);
     if (!userToDelete) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    if (userToDelete.role === 'Admin') {
-      return res.status(403).json({ message: 'Cannot delete an admin' });
+    if (userToDelete.role === "Admin") {
+      return res.status(403).json({ message: "Cannot delete an admin" });
     }
 
     await User.findByIdAndDelete(userId);
-    res.status(200).json({ message: 'User deleted successfully' });
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -134,50 +136,59 @@ exports.loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email: username });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    console.log(user.password);
+
+    // const isPasswordMatch = await bcrypt.compare(password, user.password);
+    // if (!isPasswordMatch) {
+    //   return res.status(401).json({ message: "Invalid credentials" });
+    // }
+
+    if(password !== user.password){
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Create and sign JWT token
     const token = jwt.sign(
       { id: user._id, username: user.username, role: user.role },
-      'your_jwt_secret',
-      { expiresIn: '1h' }
+      "your_jwt_secret",
+      { expiresIn: "1h" }
     );
 
     res.status(200).json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 // Profile Update Route (Optional)
 exports.updateProfile = async (req, res) => {
-  const { name, email, username, password, currentPassword, profileImage } = req.body;
+  const { name, email, username, password, currentPassword, profileImage } =
+    req.body;
   const userId = req.user.id;
 
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // If password is being updated, verify current password and hash new one
     if (password) {
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) {
-        return res.status(400).json({ message: 'Current password is incorrect' });
+        return res
+          .status(400)
+          .json({ message: "Current password is incorrect" });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -190,9 +201,9 @@ exports.updateProfile = async (req, res) => {
     user.profileImage = profileImage || user.profileImage; // Update profile image if provided
 
     await user.save();
-    res.status(200).json({ message: 'Profile updated successfully' });
+    res.status(200).json({ message: "Profile updated successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
