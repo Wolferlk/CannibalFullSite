@@ -1,5 +1,4 @@
-
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Hero() {
@@ -27,13 +26,28 @@ export default function Hero() {
           <p className="text-xl md:text-2xl tracking-wide">
           Welcome to Cannibal Clothing – where bold meets unique.
           </p>
-          <Link
-            to="/store"
-            className="inline-flex items-center gap-2 bg-white text-black px-8 py-3 rounded-full
-              hover:bg-gray-100 transition-colors duration-300"
-          >
-            Shop Now <ArrowRight className="w-5 h-5" />
-          </Link>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/store"
+              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20
+                hover:bg-white/20 hover:border-white/30 text-white px-8 py-3 rounded-full
+                transition-all duration-300 hover:gap-3 group"
+            >
+              Shop Now 
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+
+            <Link
+              to="/ai-item-finder"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500
+                hover:from-purple-600 hover:to-blue-600 text-white px-8 py-3 rounded-full
+                transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              <Sparkles className="w-5 h-5 animate-pulse" />
+              AI Item Finder
+            </Link>
+          </div>
         </div>
       </div>
     </div>
